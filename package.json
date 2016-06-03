@@ -1,0 +1,28 @@
+{
+  "name": "resize-dolphin-pack",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bootstrap.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Léo Lam <leo@leolam.fr>",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "babel-preset-node6": "^11.0.0",
+    "babel-preset-stage-2": "^6.0.0",
+    "babel-register": "^6.0.0",
+    "colors": "^1.1.2",
+    "imagemagick-native": "^1.9.2",
+    "recluster": "^0.4.5",
+    "walk": "^2.3.9"
+  },
+  "devDependencies": {
+    "babel-eslint": "^6.0.0",
+    "eslint": "^2.9.0",
+    "eslint-config-import": "^0.13.0",
+    "eslint-import-resolver-node": "^0.2.0",
+    "eslint-plugin-import": "^1.8.0",
+    "eslint_d": "^3.1.0"
+  }
+}
