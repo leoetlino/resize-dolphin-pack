@@ -36,3 +36,7 @@ skipping ~/wii/texture-packs/GZL/Items/Heros Bow/GZLE01_28764a1e_14.png
 3166 files to process, 634 files/worker
 404/3166  [====                          ] 13% HUD/Screens/Start Screen/tex1_256x64_08aba0ba05a7746d_5.PNG
 ```
+
+## TODO
+* DDS support (not sure if Imagemagick supports them without any issues)
+* better worker usage (it currently splits the jobs evenly, and some workers can finish much earlier)
