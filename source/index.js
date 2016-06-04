@@ -9,7 +9,7 @@ program
   .option("-i, --input <path>", "Path to the original texture pack [REQUIRED]")
   .option("-o, --output <path>", "Path to the output directory (where the resized pack will be) [REQUIRED]")
   .option("-j, --workers <number>", "Number of concurrent workers to start [default: number of cores]", parseInt)
-  .option("-x, --scale <number>", "Target scale (resized textures will be x times larger than the game's original) [default: x2]", parseInt);
+  .option("-x, --scale <number>", "Target scale (resized textures will be x times larger than the game's original) [default: x3]", parseInt);
 program.parse(process.argv);
 
 if (!program.input || !program.output) {
@@ -100,6 +100,6 @@ walker.on("end", () => {
   // Dispatch jobs
   for (let i = 0; i < jobs.length; i++) {
     workers[i].on("message", workerMsgHandler(i));
-    workers[i].send({ type: "jobs", outputDirectory, jobs: jobs[i], targetScale: program.scale });
+    workers[i].send({ type: "jobs", outputDirectory, jobs: jobs[i], targetScale: program.scale || 3 });
   }
 });

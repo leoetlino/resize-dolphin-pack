@@ -11,7 +11,7 @@ process.on("message", (message) => {
   process.exit(1);
 });
 
-async function workOnJobs(jobs, outputDirectory, targetScale = 2) {
+async function workOnJobs(jobs, outputDirectory, targetScale) {
   const warnings = [];
 
   const newTextureNameRegex = /^tex1_(\d*)x(\d*)_(.*).(?:png|jpg|jpeg)$/i;
