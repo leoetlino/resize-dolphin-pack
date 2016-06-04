@@ -3,12 +3,16 @@ import fs from "fs";
 import * as utils from "./utils.js";
 import imagemagick from "imagemagick-native";
 
+const fail = (error) => {
+  process.send({ type: "error", error });
+  process.exit(1);
+};
+
 process.on("message", (message) => {
   if (message.type === "jobs") {
     return workOnJobs(message.jobs, message.outputDirectory, message.targetScale);
   }
-  process.send({ type: "error", error: "Unknown message type: " + message.type });
-  process.exit(1);
+  fail("Unknown message type: " + message.type);
 });
 
 async function workOnJobs(jobs, outputDirectory, targetScale) {
@@ -22,8 +26,7 @@ async function workOnJobs(jobs, outputDirectory, targetScale) {
     // printDebug(`Processing ${file}`.blue);
     const match = newTextureNameRegex.exec(name);
     if (!match) { // this should normally never happen
-      process.send({ type: "error", error: `BUG: No match for ${file}` });
-      process.exit(1);
+      fail(`BUG: No match for ${file}`);
     }
     const [, origWidth, origHeight] = match;
 
@@ -58,7 +61,7 @@ async function workOnJobs(jobs, outputDirectory, targetScale) {
         await utils.copyFile(file, outputFile);
       }
     } catch (error) {
-      process.send({ type: "error", error: error.message });
+      fail(error.message);
       process.exit(1);
     }
 
