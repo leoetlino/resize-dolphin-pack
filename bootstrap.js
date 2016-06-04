@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * resize-dolphin-pack
  * Copyright (C) 2016  Léo Lam

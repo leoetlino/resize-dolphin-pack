@@ -6,6 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "resize-dolphin-pack": "./bootstrap.js"
+  },
   "author": "Léo Lam <leo@leolam.fr>",
   "license": "GPL-3.0",
   "dependencies": {
