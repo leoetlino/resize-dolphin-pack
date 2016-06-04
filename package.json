@@ -13,7 +13,9 @@
     "babel-preset-stage-2": "^6.0.0",
     "babel-register": "^6.0.0",
     "colors": "^1.1.2",
+    "commander": "^2.9.0",
     "imagemagick-native": "^1.9.2",
+    "progress": "^1.1.8",
     "recluster": "^0.4.5",
     "walk": "^2.3.9"
   },

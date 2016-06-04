@@ -18,14 +18,16 @@
 
 require("babel-register");
 require("colors");
+const cluster = require("cluster");
 
 process.on("uncaughtException", (error) => {
-  console.error(`[UNCAUGHT] ${error.message}`.red.bgBlack.bold);
+  console.error(`${error.message}`.red.bgBlack.bold);
   console.error(error.stack.red);
+  process.exit(1);
 });
 
-global.printDebug = (message) => {
-  console.log(`${message}`);
+global.printDebug = (...args) => {
+  console.log(...args);
 };
 
 global.printInfo = (message) => {
@@ -40,4 +42,8 @@ global.printError = (message) => {
   console.error(`${message}`.red.bgBlack.bold);
 };
 
-require("./source/index.js");
+if (cluster.isMaster) {
+  require("./source/index.js");
+} else {
+  require("./source/worker.js");
+}

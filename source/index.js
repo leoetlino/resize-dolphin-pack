@@ -1,105 +1,105 @@
-import fs from "fs";
 import path from "path";
 import walk from "walk";
-import imagemagick from "imagemagick-native";
+import recluster from "recluster";
+import program from "commander";
+import ProgressBar from "progress";
 import * as utils from "./utils.js";
 
-// Get a sane directory path
-let directory = process.argv[2];
-if (!directory) {
-  printError("No path to the texture pack directory passed as first argument.");
-  process.exit(1);
-}
-try {
-  directory = utils.makeSureDirectoryExists(directory);
-} catch (error) {
-  printError(error.message);
+program
+  .option("-i, --input <path>", "Path to the original texture pack [REQUIRED]")
+  .option("-o, --output <path>", "Path to the output directory (where the resized pack will be) [REQUIRED]")
+  .option("-j, --workers <number>", "Number of concurrent workers to start [default: number of cores]", parseInt)
+  .option("-x, --scale <number>", "Target scale (resized textures will be x times larger than the game's original) [default: x2]", parseInt);
+program.parse(process.argv);
+
+if (!program.input || !program.output) {
+  printError("Missing arguments");
+  program.outputHelp();
   process.exit(1);
 }
 
-let outputDirectory = process.argv[3];
-if (!outputDirectory) {
-  printError("No path to the output directory passed as second argument.");
-  process.exit(1);
-}
-try {
-  outputDirectory = utils.makeSureDirectoryExists(outputDirectory);
-} catch (error) {
-  printError(error.message);
-  process.exit(1);
-}
+const directory = utils.makeSureDirectoryExists(program.input);
+const outputDirectory = utils.makeSureDirectoryExists(program.output);
 
 printInfo("Directory: " + directory);
 printInfo("Output: " + outputDirectory);
-console.log("\n");
+printInfo("Target scale: original game x" + program.scale);
+console.log("");
 
+const files = [];
 const walker = walk.walk(directory);
-let counter = 0;
-let warnings = [];
-walker.on("file", async (root, stat, next) => {
-  const file = path.resolve(root, stat.name);
-  printDebug(("Processing " + file).blue);
+printInfo("> Getting the file list…".cyan);
 
-  const newTextureNameRegex = /^tex1_(\d*)x(\d*)_(.*)_(\d*).(?:png|jpg|jpeg)$/i;
+const newTextureNameRegex = /^tex1_(\d*)x(\d*)_(.*).(?:png|jpg|jpeg)$/i;
+walker.on("file", (root, stat, next) => {
+  const file = path.resolve(root, stat.name);
+
   if (!newTextureNameRegex.test(stat.name)) {
-    printDebug("skipped");
+    printDebug("skipping " + file);
     return next();
   }
-
-  const match = newTextureNameRegex.exec(stat.name);
-  if (!match) {
-    // This should not happen at all
-    printError("BUG: No match!");
-    process.exit(1);
-  }
-  const [, origWidth, origHeight] = match;
-  try {
-    const textureData = await utils.readFile(file);
-    const { width, height } = imagemagick.identify({ srcData: textureData });
-    const scale = { width: width / origWidth, height: height / origHeight };
-    if (scale.width !== scale.height) {
-      warnings.push({ file, message: `scale.width != scale.height (${scale.width}x${scale.height})` });
-    }
-    if (!Number.isInteger(scale.width)) {
-      warnings.push({ file, message: `Non-integer scale (${scale.width}x${scale.height})` });
-    }
-    printDebug(`orig: ${origWidth}x${origHeight}, new: ${width}x${height}, scale: ${scale.width}x${scale.height}`);
-
-    const targetScale = 2;
-    const outputFile = path.resolve(outputDirectory, stat.name)
-      .replace(".PNG", ".png")
-      .replace(".JPG", ".jpg")
-      .replace(".JPEG", ".jpeg");
-    if (scale.width > targetScale) {
-      const targetWidth = origWidth * targetScale;
-      const targetHeight = origHeight * targetScale;
-      printDebug(`scale higher than 4, resizing to ${targetWidth}x${targetHeight}`.yellow);
-      fs.writeFileSync(outputFile, imagemagick.convert({
-        srcData: textureData,
-        width: targetWidth,
-        height: targetHeight,
-      }));
-    } else {
-      printDebug(`nothing to do, copying to ${outputFile}`.yellow);
-      await utils.copyFile(file, outputFile);
-    }
-  } catch (error) {
-    printError(error);
-    process.exit(1);
-  }
-
-  counter++;
+  files.push({ file, name: stat.name });
   next();
 });
 
 walker.on("end", () => {
-  console.log("\n");
-  printInfo(`${counter} files processed`);
-  if (warnings.length) {
-    printWarn(warnings.length + " warning(s)");
-    console.log();
-    warnings.forEach((warning) => {
-      printWarn(`${warning.file.yellow}: ${warning.message}`);
-    });
+  const cluster = recluster(path.join(__dirname, "../bootstrap.js"), {
+    workers: program.workers,
+    readyWhen: "ready",
+  });
+  cluster.run();
+  const workers = cluster.workers();
+  const filesPerWorker = Math.ceil(files.length / workers.length);
+  printInfo(`${files.length} files to process, ${filesPerWorker} files/worker`);
+
+  // Cut the files list into smaller parts for workers.
+  const jobs = [];
+  for (let i = 0; i < files.length; i += filesPerWorker) {
+    jobs.push(files.slice(i, i + filesPerWorker));
+  }
+
+  // Progress bar
+  const bar = new ProgressBar(":current/:total\t[:bar] :percent :fileName".yellow, {
+    total: files.length,
+    complete: "=",
+    incomplete: " ",
+    width: 30,
+  });
+
+  // Handle messages from workers
+  let finishedCount = 0;
+  const allFinishedHandler = () => {
+    console.log("");
+    printInfo(`${files.length} files processed`);
+    cluster.terminate();
+    process.exit(0);
+  };
+  const workerMsgHandler = (i) => (message) => {
+    // printDebug(`MSG (${i})`.bgBlack.white, message);
+    if (message.type === "error") {
+      printError(`WORKER ${i}: ${message.error}`);
+      cluster.terminate();
+      process.exit(1);
+    } else if (message.type === "completedOne") {
+      bar.tick(1, { fileName: message.file.replace(directory + "/", "") });
+    } else if (message.type === "completedAll") {
+      printInfo(`\nWORKER ${i}: ${message.count} files processed`.green);
+      if (message.warnings.length) {
+        printWarn(`WORKER ${i}: ${message.warnings.length} warning(s)`);
+        message.warnings.forEach((warning) => {
+          printWarn(`  ${warning.file.yellow}: ${warning.message}`);
+        });
+      }
+      finishedCount++;
+      if (finishedCount === workers.length) {
+        allFinishedHandler();
+      }
+    }
+  };
+
+  // Dispatch jobs
+  for (let i = 0; i < jobs.length; i++) {
+    workers[i].on("message", workerMsgHandler(i));
+    workers[i].send({ type: "jobs", outputDirectory, jobs: jobs[i], targetScale: program.scale });
   }
 });
