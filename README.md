@@ -7,7 +7,7 @@
 ## Getting started
 1. `sudo apt install libmagick++-dev libmagick++-6.q16-dev`
 2. `sudo ln -s /usr/lib/x86_64-linux-gnu/ImageMagick*/bin-*/Magick++-config /usr/bin/`
-3. `npm install`
+3. `npm install --production`
 
 It is recommended to do `sudo ln -s $(pwd)/bootstrap.js /usr/local/bin/resize-dolphin-pack`
 so that `resize-dolphin-pack` can be used more conveniently.
