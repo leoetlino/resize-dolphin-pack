@@ -5,11 +5,15 @@ import program from "commander";
 import ProgressBar from "progress";
 import * as utils from "./utils.js";
 
+const DEFAULT_TARGET_SCALE = 3;
+
 program
   .option("-i, --input <path>", "Path to the original texture pack [REQUIRED]")
   .option("-o, --output <path>", "Path to the output directory (where the resized pack will be) [REQUIRED]")
   .option("-j, --workers <number>", "Number of concurrent workers to start [default: number of cores]", parseInt)
-  .option("-x, --scale <number>", "Target scale (resized textures will be x times larger than the game's original) [default: x3]", parseInt);
+  .option("-x, --scale <number>",
+    `Target scale (resized textures will be x times larger than the game's original) [default: ${DEFAULT_TARGET_SCALE}]`,
+    parseInt);
 program.parse(process.argv);
 
 if (!program.input || !program.output) {
@@ -20,10 +24,11 @@ if (!program.input || !program.output) {
 
 const directory = utils.makeSureDirectoryExists(program.input);
 const outputDirectory = utils.makeSureDirectoryExists(program.output);
+const targetScale = program.scale || DEFAULT_TARGET_SCALE;
 
 printInfo("Directory: " + directory);
 printInfo("Output: " + outputDirectory);
-printInfo("Target scale: original game x" + program.scale);
+printInfo("Target scale: original game x" + targetScale);
 console.log("");
 
 const files = [];
@@ -100,6 +105,6 @@ walker.on("end", () => {
   // Dispatch jobs
   for (let i = 0; i < jobs.length; i++) {
     workers[i].on("message", workerMsgHandler(i));
-    workers[i].send({ type: "jobs", outputDirectory, jobs: jobs[i], targetScale: program.scale || 3 });
+    workers[i].send({ type: "jobs", outputDirectory, jobs: jobs[i], targetScale });
   }
 });
