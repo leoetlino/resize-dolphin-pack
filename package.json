@@ -1,7 +1,8 @@
 {
   "name": "resize-dolphin-pack",
   "version": "1.0.0",
-  "description": "",
+  "description": "A simple tool to resize a Dolphin texture pack",
+  "repository": "git@github.com:leoetlino/resize-dolphin-pack",
   "main": "bootstrap.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
