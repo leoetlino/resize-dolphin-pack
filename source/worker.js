@@ -16,6 +16,10 @@ process.on("message", (message) => {
 });
 
 async function workOnJobs(jobs, outputDirectory, targetScale) {
+  if (!jobs || !outputDirectory || !targetScale) { // this should normally never happen
+    fail("BUG: Missing parameters");
+  }
+
   const warnings = [];
 
   const newTextureNameRegex = /^tex1_(\d*)x(\d*)_(.*).(?:png|jpg|jpeg)$/i;
