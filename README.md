@@ -1,5 +1,7 @@
 # resize-dolphin-pack - A simple tool to resize a Dolphin texture pack
 
+Supports PNG (.png), JPG (.jpg and .jpeg), and DDS textures (.dds; except normal maps: .nrm.dds).
+
 ## Dependencies
 - Node v6 or higher with npm
 - libmagick: `libmagick++-dev` and `libmagick++-6.q16-dev` for Debian-based systems
@@ -38,5 +40,4 @@ skipping ~/wii/texture-packs/GZL/Items/Heros Bow/GZLE01_28764a1e_14.png
 ```
 
 ## TODO
-* DDS support (not sure if Imagemagick supports them without any issues)
 * better worker usage (it currently splits the jobs evenly, and some workers can finish much earlier)

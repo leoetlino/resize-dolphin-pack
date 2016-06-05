@@ -32,7 +32,7 @@ async function workOnJobs(jobs, outputDirectory, targetScale) {
 
   const warnings = [];
 
-  const newTextureNameRegex = /^tex1_(\d*)x(\d*)_(.*).(?:png|jpg|jpeg)$/i;
+  const newTextureNameRegex = /^tex1_(\d*)x(\d*)_(.*).(?:png|jpg|jpeg|dds)$/i;
 
   for (let texture of jobs) {
     const { file, name } = texture;
@@ -58,10 +58,17 @@ async function workOnJobs(jobs, outputDirectory, targetScale) {
 
       const outputFile = path.resolve(outputDirectory, name)
         .replace(".PNG", ".png")
+        .replace(".DDS", ".dds")
         .replace(".JPG", ".jpg")
         .replace(".JPEG", ".jpeg");
 
-      if (scale.width > targetScale) {
+      if (name.includes(".nrm.dds")) {
+        // Normal maps created by Ishiiruka-Tool cannot be read correctly by Imagemagick.
+        // Don't do anything with them as that will corrupt them.
+        // More info: https://www.imagemagick.org/discourse-server/viewtopic.php?f=3&t=29280
+        warnings.push({ file, message: "Not converting since it may cause corruption" });
+        await utils.copyFile(file, outputFile);
+      } else if (scale.width > targetScale) {
         const targetWidth = origWidth * targetScale;
         const targetHeight = origHeight * targetScale;
         // printDebug(`scale higher than ${targetScale}, resizing to ${targetWidth}x${targetHeight}`.yellow);

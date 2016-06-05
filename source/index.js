@@ -45,7 +45,7 @@ const files = [];
 const walker = walk.walk(directory);
 printInfo("> Getting the file list…".cyan);
 
-const newTextureNameRegex = /^tex1_(\d*)x(\d*)_(.*).(?:png|jpg|jpeg)$/i;
+const newTextureNameRegex = /^tex1_(\d*)x(\d*)_(.*).(?:png|jpg|jpeg|dds)$/i;
 walker.on("file", (root, stat, next) => {
   const file = path.resolve(root, stat.name);
 
