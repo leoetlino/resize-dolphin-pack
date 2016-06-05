@@ -67,6 +67,12 @@ walker.on("end", () => {
   const filesPerWorker = Math.ceil(files.length / workers.length);
   printInfo(`${files.length} files to process, ${filesPerWorker} files/worker`);
 
+  if (files.length === 0) {
+    printInfo("Nothing to do");
+    cluster.terminate();
+    process.exit(0);
+  }
+
   // Cut the files list into smaller parts for workers.
   const jobs = [];
   for (let i = 0; i < files.length; i += filesPerWorker) {
