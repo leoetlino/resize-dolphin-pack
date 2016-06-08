@@ -68,6 +68,11 @@ async function workOnJobs(jobs, outputDirectory, targetScale) {
         // More info: https://www.imagemagick.org/discourse-server/viewtopic.php?f=3&t=29280
         warnings.push({ file, message: "Not converting since it may cause corruption" });
         await utils.copyFile(file, outputFile);
+      } else if (name.includes("_mip")) {
+        // Mipmaps should not be resized, at least not according to the size in the file name.
+        // TODO: look into handling them properly
+        warnings.push({ file, message: "Not converting mipmap" });
+        await utils.copyFile(file, outputFile);
       } else if (scale.width > targetScale) {
         const targetWidth = origWidth * targetScale;
         const targetHeight = origHeight * targetScale;
